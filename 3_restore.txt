@@ -1,0 +1,345 @@
+postgres@server:~$ psql vk_staging < vk_dump.sql 
+SET
+SET
+SET
+SET
+SET
+ set_config 
+------------
+ 
+(1 row)
+
+SET
+SET
+SET
+SET
+SET
+SET
+CREATE TABLE
+ALTER TABLE
+CREATE SEQUENCE
+ALTER TABLE
+ALTER SEQUENCE
+CREATE TABLE
+ALTER TABLE
+CREATE TABLE
+ALTER TABLE
+CREATE SEQUENCE
+ALTER TABLE
+ALTER SEQUENCE
+CREATE TABLE
+ALTER TABLE
+CREATE SEQUENCE
+ALTER TABLE
+ALTER SEQUENCE
+CREATE TABLE
+ALTER TABLE
+CREATE SEQUENCE
+ALTER TABLE
+ALTER SEQUENCE
+CREATE TABLE
+ALTER TABLE
+CREATE SEQUENCE
+ALTER TABLE
+ALTER SEQUENCE
+CREATE TABLE
+ALTER TABLE
+CREATE SEQUENCE
+ALTER TABLE
+ALTER SEQUENCE
+CREATE TABLE
+ALTER TABLE
+CREATE SEQUENCE
+ALTER TABLE
+ALTER SEQUENCE
+CREATE TABLE
+ALTER TABLE
+CREATE SEQUENCE
+ALTER TABLE
+ALTER SEQUENCE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+ setval 
+--------
+     20
+(1 row)
+
+ setval 
+--------
+     20
+(1 row)
+
+ setval 
+--------
+      3
+(1 row)
+
+ setval 
+--------
+     20
+(1 row)
+
+ setval 
+--------
+     20
+(1 row)
+
+ setval 
+--------
+     20
+(1 row)
+
+ setval 
+--------
+     20
+(1 row)
+
+ setval 
+--------
+     20
+(1 row)
+
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+postgres@server:~$ \c vk_dump.sql 
+14/            .bash_history  .psql_history  .viminfo       vk_dump.sql    
+postgres@server:~$ psql 
+psql (14.7 (Ubuntu 14.7-0ubuntu0.22.04.1))
+Type "help" for help.
+
+postgres=# \c vk
+vk          vk_staging  
+postgres=# \c vk_staging 
+You are now connected to database "vk_staging" as user "postgres".
+vk_staging=# \c vk_staging;
+You are now connected to database "vk_staging" as user "postgres".
+vk_staging=# exit
+postgres@server:~$ exit
+logout
+artem@server:~$ psql -Ugb_user vk_staging -h127.0.0.1
+Password for user gb_user: 
+psql: error: connection to server at "127.0.0.1", port 5432 failed: FATAL:  password authentication failed for user "gb_user"
+connection to server at "127.0.0.1", port 5432 failed: FATAL:  password authentication failed for user "gb_user"
+artem@server:~$ sudo psql -Ugb_user vk_staging -h127.0.0.1
+Password for user gb_user: 
+psql: error: connection to server at "127.0.0.1", port 5432 failed: FATAL:  password authentication failed for user "gb_user"
+connection to server at "127.0.0.1", port 5432 failed: FATAL:  password authentication failed for user "gb_user"
+artem@server:~$ sudo psql -Ugb_user vk_staging -h127.0.0.1
+Password for user gb_user: 
+psql (14.7 (Ubuntu 14.7-0ubuntu0.22.04.1))
+SSL connection (protocol: TLSv1.3, cipher: TLS_AES_256_GCM_SHA384, bits: 256, compression: off)
+Type "help" for help.
+
+vk_staging=> \c
+SSL connection (protocol: TLSv1.3, cipher: TLS_AES_256_GCM_SHA384, bits: 256, compression: off)
+You are now connected to database "vk_staging" as user "gb_user".
+vk_staging=> SELECT * FR
+
+vk_staging=> SELECT * FROM users;
+ id | first_name | last_name  |                  email                   |  phone   | main_photo_id |     created_at      
+----+------------+------------+------------------------------------------+----------+---------------+---------------------
+  1 | Nero       | Mccullough | odio.nam@hotmail.couk                    | 350-5533 |            57 | 2022-01-09 20:15:13
+  2 | Bo         | Parrish    | mauris.blandit@outlook.org               | 178-6284 |            73 | 2021-10-07 04:13:02
+  3 | Fritz      | Beck       | justo.nec@aol.ca                         | 244-1267 |            41 | 2022-12-02 13:51:43
+  4 | Carissa    | Grimes     | ac.libero@icloud.ca                      | 522-6938 |            83 | 2021-12-08 02:40:05
+  5 | Shannon    | Travis     | sed@yahoo.net                            | 130-7254 |            48 | 2021-11-10 16:23:51
+  6 | Emerald    | Talley     | morbi@icloud.edu                         | 423-6864 |            55 | 2022-10-13 04:46:49
+  7 | Knox       | Stokes     | nunc.ullamcorper@aol.edu                 | 965-7196 |            94 | 2021-07-20 00:40:02
+  8 | Riley      | Hodge      | hendrerit.consectetuer.cursus@yahoo.couk | 330-5538 |             9 | 2022-11-07 02:41:57
+  9 | Mara       | Reilly     | rutrum.fusce@outlook.ca                  | 859-6661 |            34 | 2021-10-31 02:18:53
+ 10 | Shelby     | Pearson    | duis.dignissim.tempor@aol.org            | 575-9500 |            32 | 2022-03-03 12:52:44
+ 11 | Clementine | Duffy      | eros.non@outlook.edu                     | 515-8574 |            29 | 2022-03-28 08:44:30
+ 12 | Aaron      | Shaffer    | est@protonmail.ca                        | 323-2120 |            28 | 2022-08-23 20:56:30
+ 13 | Skyler     | Joyner     | morbi@yahoo.edu                          | 445-3405 |            41 | 2022-10-16 20:03:57
+ 14 | Mollie     | Henry      | lobortis.class.aptent@icloud.org         | 313-2436 |            70 | 2021-12-19 07:41:05
+ 15 | Jelani     | Santana    | vitae@outlook.org                        | 311-3933 |           100 | 2021-07-30 09:01:26
+ 16 | Priscilla  | Beach      | magna.sed@aol.org                        | 884-2182 |            47 | 2021-12-25 01:12:02
+ 17 | Emmanuel   | Hubbard    | semper.auctor@google.org                 | 222-2560 |            10 | 2022-10-16 08:33:04
+ 18 | Merritt    | Thornton   | imperdiet.non.vestibulum@yahoo.ca        | 178-7614 |            74 | 2022-12-14 11:02:26
+ 19 | Forrest    | Buckley    | turpis.aliquam.adipiscing@yahoo.net      | 599-7335 |            40 | 2022-02-11 06:10:24
+ 20 | Neve       | Rowland    | aliquam.ultrices.iaculis@yahoo.com       | 223-4540 |            50 | 2023-02-25 10:54:07
+(20 rows)
+
+vk_staging=> 
