@@ -1,0 +1,25 @@
+############
+# Установить любое расширение PostgreSQL на ваш выбор.
+############
+
+
+artem@server:~$ sudo su - postgres
+[sudo] password for artem: 
+postgres@server:~$ psql 
+psql (14.7 (Ubuntu 14.7-0ubuntu0.22.04.1))
+Type "help" for help.
+
+postgres=# SELECT * FROM pg_extension WHERE extname = 'pg_stat_statements';
+ oid | extname | extowner | extnamespace | extrelocatable | extversion | extconfig | extcondition 
+-----+---------+----------+--------------+----------------+------------+-----------+--------------
+(0 rows)
+
+postgres=# CREATE EXTENSION "pg_stat_statements";
+CREATE EXTENSION
+postgres=# SELECT * FROM pg_extension WHERE extname = 'pg_stat_statements';
+  oid  |      extname       | extowner | extnamespace | extrelocatable | extversion | extconfig | extcondition 
+-------+--------------------+----------+--------------+----------------+------------+-----------+--------------
+ 40983 | pg_stat_statements |       10 |         2200 | t              | 1.9        |           | 
+(1 row)
+
+postgres=#

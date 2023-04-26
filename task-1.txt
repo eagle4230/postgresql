@@ -1,0 +1,213 @@
+##########
+# Создать роли для пользователей Федор Серов и Роман Белов. 
+# Создать роли для групп аналитиков и тестировщиков. 
+# Поместить пользователя Федор Серов в группу аналитиков а пользователя Роман Белов в группу тестировщиков. 
+# Дать группе аналитиков право только на чтение данных в БД vk. 
+# Дать группе тестировщиков все права в БД vk. 
+# Подключиться к БД vk под обоими пользователями и проверить права выполнив простые операции SQL.
+##########
+
+
+eagle @ gnezdo ~
+└─ $ ▶ ssh artem@192.168.122.23
+artem@192.168.122.23's password: 
+Permission denied, please try again.
+artem@192.168.122.23's password: 
+Welcome to Ubuntu 22.04.2 LTS (GNU/Linux 5.15.0-70-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/advantage
+
+  System information as of Wed Apr 26 07:11:06 PM UTC 2023
+
+  System load:  0.2900390625      Processes:             108
+  Usage of /:   64.7% of 8.02GB   Users logged in:       0
+  Memory usage: 11%               IPv4 address for ens3: 192.168.122.23
+  Swap usage:   0%
+
+ * Strictly confined Kubernetes makes edge and IoT secure. Learn how MicroK8s
+   just raised the bar for easy, resilient and secure K8s cluster deployment.
+
+   https://ubuntu.com/engage/secure-kubernetes-at-the-edge
+
+ * Introducing Expanded Security Maintenance for Applications.
+   Receive updates to over 25,000 software packages with your
+   Ubuntu Pro subscription. Free for personal use.
+
+     https://ubuntu.com/pro
+
+Expanded Security Maintenance for Applications is not enabled.
+
+15 updates can be applied immediately.
+To see these additional updates run: apt list --upgradable
+
+Enable ESM Apps to receive additional future security updates.
+See https://ubuntu.com/esm or run: sudo pro status
+
+
+Last login: Mon Apr 24 18:29:56 2023 from 192.168.122.1
+artem@server:~$ sudo su - postgres
+postgres@server:~$ psql 
+psql (14.7 (Ubuntu 14.7-0ubuntu0.22.04.1))
+Type "help" for help.
+
+postgres=# CREATE ROLE serovf LOGIN;
+CREATE ROLE
+postgres=# CREATE ROLE belovr LOGIN;
+CREATE ROLE
+postgres=# CREATE ROLE analysts;
+CREATE ROLE
+postgres=# CREATE ROLE testers;
+CREATE ROLE
+postgres=# GRANT se
+SELECT  serovf  
+postgres=# GRANT se
+SELECT  serovf  
+postgres=# GRANT analysts TO serovf;
+GRANT ROLE
+postgres=# GRANT te
+TEMPORARY  testers    
+postgres=# GRANT testers TO belovr;
+GRANT ROLE
+postgres=# \du
+                                    List of roles
+ Role name |                         Attributes                         | Member of  
+-----------+------------------------------------------------------------+------------
+ analysts  | Cannot login                                               | {}
+ belovr    |                                                            | {testers}
+ gb_user   |                                                            | {}
+ postgres  | Superuser, Create role, Create DB, Replication, Bypass RLS | {}
+ serovf    |                                                            | {analysts}
+ testers   | Cannot login                                               | {}
+
+postgres=# \c vk
+You are now connected to database "vk" as user "postgres".
+vk=# GRANT SELECT ON ALL TABLES IN SCHEMA public TO analysts;
+GRANT
+vk=# GRANT ALL ON ALL TABLES IN SCHEMA public TO testers;
+GRANT
+vk=# GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO testers;
+GRANT
+
+vk=# \z
+                                            Access privileges
+ Schema |            Name            |   Type   |    Access privileges    | Column privileges | Policies 
+--------+----------------------------+----------+-------------------------+-------------------+----------
+ public | communities                | table    | gb_user=arwdDxt/gb_user+|                   | 
+        |                            |          | analysts=r/gb_user     +|                   | 
+        |                            |          | testers=arwdDxt/gb_user |                   | 
+ public | communities_id_seq         | sequence | gb_user=rwU/gb_user    +|                   | 
+        |                            |          | testers=rwU/gb_user     |                   | 
+ public | communities_users          | table    | gb_user=arwdDxt/gb_user+|                   | 
+        |                            |          | analysts=r/gb_user     +|                   | 
+        |                            |          | testers=arwdDxt/gb_user |                   | 
+ public | friendship                 | table    | gb_user=arwdDxt/gb_user+|                   | 
+        |                            |          | analysts=r/gb_user     +|                   | 
+        |                            |          | testers=arwdDxt/gb_user |                   | 
+ public | friendship_id_seq          | sequence | gb_user=rwU/gb_user    +|                   | 
+        |                            |          | testers=rwU/gb_user     |                   | 
+ public | friendship_statuses        | table    | gb_user=arwdDxt/gb_user+|                   | 
+        |                            |          | analysts=r/gb_user     +|                   | 
+        |                            |          | testers=arwdDxt/gb_user |                   | 
+ public | friendship_statuses_id_seq | sequence | gb_user=rwU/gb_user    +|                   | 
+        |                            |          | testers=rwU/gb_user     |                   | 
+ public | messages                   | table    | gb_user=arwdDxt/gb_user+|                   | 
+        |                            |          | analysts=r/gb_user     +|                   | 
+        |                            |          | testers=arwdDxt/gb_user |                   | 
+ public | messages_id_seq            | sequence | gb_user=rwU/gb_user    +|                   | 
+        |                            |          | testers=rwU/gb_user     |                   | 
+ public | photo                      | table    | gb_user=arwdDxt/gb_user+|                   | 
+        |                            |          | analysts=r/gb_user     +|                   | 
+        |                            |          | testers=arwdDxt/gb_user |                   | 
+ public | photo_id_seq               | sequence | gb_user=rwU/gb_user    +|                   | 
+        |                            |          | testers=rwU/gb_user     |                   | 
+ public | subscriptions              | table    | gb_user=arwdDxt/gb_user+|                   | 
+        |                            |          | analysts=r/gb_user     +|                   | 
+        |                            |          | testers=arwdDxt/gb_user |                   | 
+ public | subscriptions_id_seq       | sequence | gb_user=rwU/gb_user    +|                   | 
+        |                            |          | testers=rwU/gb_user     |                   | 
+ public | users                      | table    | gb_user=arwdDxt/gb_user+|                   | 
+        |                            |          | analysts=r/gb_user     +|                   | 
+        |                            |          | testers=arwdDxt/gb_user |                   | 
+ public | users_id_seq               | sequence | gb_user=rwU/gb_user    +|                   | 
+        |                            |          | testers=rwU/gb_user     |                   | 
+ public | video                      | table    | gb_user=arwdDxt/gb_user+|                   | 
+        |                            |          | analysts=r/gb_user     +|                   | 
+        |                            |          | testers=arwdDxt/gb_user |                   | 
+ public | video_id_seq               | sequence | gb_user=rwU/gb_user    +|                   | 
+        |                            |          | testers=rwU/gb_user     |                   | 
+(17 rows)
+
+
+vk=# ALTER ROLE serovf WITH PASSWORD 'some_pas';
+ALTER ROLE
+vk=# ALTER ROLE belovr WITH PASSWORD 'some_pas';
+ALTER ROLE
+vk=# \zx
+invalid command \zx
+Try \? for help.
+vk=# \x
+Expanded display is on.
+vk=# \z
+vk=# \x
+Expanded display is off.
+vk=# \q
+postgres@server:~$ exit
+logout
+artem@server:~$ 
+artem@server:~$ 
+artem@server:~$ 
+artem@server:~$ sudo psql -U serovf vk -h 127.0.0.1 -W
+[sudo] password for artem: 
+Password: 
+psql (14.7 (Ubuntu 14.7-0ubuntu0.22.04.1))
+SSL connection (protocol: TLSv1.3, cipher: TLS_AES_256_GCM_SHA384, bits: 256, compression: off)
+Type "help" for help.
+
+vk=> SELECT * FROM users WHERE id = 7\gx
+-[ RECORD 1 ]-+------------------------------------
+id            | 7
+first_name    | Knox
+last_name     | Stokes
+email         | nunc.ullamcorper@aol.edu
+phone         | 965-7196
+main_photo_id | 7
+created_at    | 2021-07-20 00:40:02
+user_contacts | (965-7196,nunc.ullamcorper@aol.edu)
+
+vk=> UPDATE users SET first_name = 'Alesha' WHERE id = '7';
+ERROR:  permission denied for table users
+vk=> \q
+artem@server:~$ sudo psql -U belovr vk -h 127.0.0.1 -W
+Password: 
+psql (14.7 (Ubuntu 14.7-0ubuntu0.22.04.1))
+SSL connection (protocol: TLSv1.3, cipher: TLS_AES_256_GCM_SHA384, bits: 256, compression: off)
+Type "help" for help.
+
+vk=> SELECT * FROM users WHERE id = 7\gx
+-[ RECORD 1 ]-+------------------------------------
+id            | 7
+first_name    | Knox
+last_name     | Stokes
+email         | nunc.ullamcorper@aol.edu
+phone         | 965-7196
+main_photo_id | 7
+created_at    | 2021-07-20 00:40:02
+user_contacts | (965-7196,nunc.ullamcorper@aol.edu)
+
+vk=> UPDATE users SET first_name = 'Alesha' WHERE id = '7';
+UPDATE 1
+vk=> SELECT * FROM users WHERE id = 7\gx
+-[ RECORD 1 ]-+------------------------------------
+id            | 7
+first_name    | Alesha
+last_name     | Stokes
+email         | nunc.ullamcorper@aol.edu
+phone         | 965-7196
+main_photo_id | 7
+created_at    | 2021-07-20 00:40:02
+user_contacts | (965-7196,nunc.ullamcorper@aol.edu)
+
+vk=> \q
+artem@server:~$ 
