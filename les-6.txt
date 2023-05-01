@@ -1,0 +1,90 @@
+####################
+# Создать два представления для таблицы видео. 
+# Одно представление должно быть неизменяемым, другое - изменяемым. 
+# Проверить изменяемость второго представления.
+####################
+
+vk=> CREATE VIEW big_size_10_videos AS
+SELECT
+  video.id,
+  users.first_name,
+  users.last_name,
+  video.url,
+  video.size
+FROM video 
+JOIN users ON video.owner_id = users.id
+ORDER BY video.size DESC LIMIT 10;
+CREATE VIEW
+vk=> SELECT * FROM big_size_10_videos;
+ id | first_name | last_name |              url              |  size   
+----+------------+-----------+-------------------------------+---------
+ 12 | Mollie     | Henry     | http://reddit.com/settings    | 2983514
+  4 | Shelby     | Pearson   | http://zoom.us/en-us          | 2755740
+  7 | Shannon    | Travis    | https://instagram.com/sub     | 2709529
+  8 | Mollie     | Henry     | http://google.com/sub/cars    | 2478119
+  1 | Shelby     | Pearson   | https://yahoo.com/one         | 2339880
+ 15 | Jelani     | Santana   | http://instagram.com/user/110 | 2275071
+ 19 | Alesha     | Stokes    | http://guardian.co.uk/site    | 2195277
+ 20 | Riley      | Hodge     | https://walmart.com/fr        | 2092419
+ 10 | Priscilla  | Beach     | https://walmart.com/en-ca     | 2035497
+ 13 | Carissa    | Grimes    | https://naver.com/user/110    | 2017730
+(10 rows)
+
+vk=> CREATE VIEW video_2023 AS
+SELECT uploaded_at, url, description, size FROM video
+WHERE uploaded_at >= '2023-01-01';
+CREATE VIEW
+vk=> SELECT * FROM video_2023;
+     uploaded_at     |              url               |             description             |  size   
+---------------------+--------------------------------+-------------------------------------+---------
+ 2023-02-11 17:13:44 | https://instagram.com/sub      | tempor diam dictum sapien. Aenean   | 2709529
+ 2023-02-13 13:48:04 | http://baidu.com/en-us         | venenatis vel, faucibus id, libero. | 1503704
+ 2023-01-02 17:24:42 | http://guardian.co.uk/settings | odio a purus. Duis elementum,       | 1526844
+(3 rows)
+
+vk=> UPDATE video_2023 SET description = 'Очень классный фильм' WHERE url = 'http://baidu.com/en-us';
+UPDATE 1
+vk=> SELECT * FROM video_2023;
+     uploaded_at     |              url               |            description            |  size   
+---------------------+--------------------------------+-----------------------------------+---------
+ 2023-02-13 13:48:04 | http://baidu.com/en-us         | Очень классный фильм              | 1503704
+ 2023-02-11 17:13:44 | https://instagram.com/sub      | tempor diam dictum sapien. Aenean | 2709529
+ 2023-01-02 17:24:42 | http://guardian.co.uk/settings | odio a purus. Duis elementum,     | 1526844
+(3 rows)
+
+vk=> SELECT desc FROM video_2023;
+
+vk=> SELECT uploaded_at, url, description, size FROM video WHERE url = 'http://baidu.com/en-us';
+     uploaded_at     |          url           |     description      |  size   
+---------------------+------------------------+----------------------+---------
+ 2023-02-13 13:48:04 | http://baidu.com/en-us | Очень классный фильм | 1503704
+(1 row)
+
+vk=> 
+ 
+####################
+# Создать функцию, которая по идентификатору пользователя ищет того, 
+# кто написал пользователю наибольшее количество сообщений. 
+# В результат нужно вывести идентификатор искомого пользователя.
+####################
+
+vk=> CREATE FUNCTION find_user_sent_greatest_messages_by_user(user_id INTEGER)
+RETURNS INTEGER AS
+$$
+SELECT to_user_id 
+FROM messages 
+WHERE from_user_id = user_id 
+GROUP BY to_user_id 
+ORDER BY COUNT(*) 
+DESC LIMIT 1;
+$$
+LANGUAGE SQL;
+CREATE FUNCTION
+vk=> SELECT find_user_sent_greatest_messages_by_user(17);
+ find_user_sent_greatest_messages_by_user 
+------------------------------------------
+                                       20
+(1 row)
+
+vk=> 
+
