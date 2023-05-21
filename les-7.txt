@@ -1,0 +1,244 @@
+eagle @ gnezdo ~
+└─ $ ▶ ssh artem@192.168.122.23
+artem@192.168.122.23's password: 
+Welcome to Ubuntu 22.04.2 LTS (GNU/Linux 5.15.0-70-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/advantage
+
+  System information as of Sun May 21 07:45:15 PM UTC 2023
+
+  System load:  0.0               Processes:             111
+  Usage of /:   67.3% of 8.02GB   Users logged in:       0
+  Memory usage: 13%               IPv4 address for ens3: 192.168.122.23
+  Swap usage:   0%
+
+ * Strictly confined Kubernetes makes edge and IoT secure. Learn how MicroK8s
+   just raised the bar for easy, resilient and secure K8s cluster deployment.
+
+   https://ubuntu.com/engage/secure-kubernetes-at-the-edge
+
+ * Introducing Expanded Security Maintenance for Applications.
+   Receive updates to over 25,000 software packages with your
+   Ubuntu Pro subscription. Free for personal use.
+
+     https://ubuntu.com/pro
+
+Expanded Security Maintenance for Applications is not enabled.
+
+40 updates can be applied immediately.
+14 of these updates are standard security updates.
+To see these additional updates run: apt list --upgradable
+
+Enable ESM Apps to receive additional future security updates.
+See https://ubuntu.com/esm or run: sudo pro status
+
+
+Last login: Sun May 21 19:31:26 2023 from 192.168.122.1
+artem@server:~$ sudo psql -Ugb_user vk -h127.0.0.1
+[sudo] password for artem: 
+Password for user gb_user: 
+psql (14.7 (Ubuntu 14.7-0ubuntu0.22.04.1))
+SSL connection (protocol: TLSv1.3, cipher: TLS_AES_256_GCM_SHA384, bits: 256, compression: off)
+Type "help" for help.
+
+vk=> ------------------------------------------------------------------------
+vk=> --1. Удалить пользователей, которые не имеют ни одной дружеской связи с 
+vk=> --подтвержденным статусом. Нужно удалить все данные, связанные с такими 
+vk=> --пользователями. Для решения используйте транзакцию.
+vk=> ------------------------------------------------------------------------
+vk=> 
+vk=> CREATE VIEW users_with_confirmed_friendship AS
+vk-> SELECT DISTINCT users.id
+vk-> FROM users
+vk->   LEFT JOIN friendship
+vk->     ON users.id = friendship.requested_by_user_id
+vk->       OR users.id = friendship.requested_to_user_id
+vk->   LEFT JOIN friendship_statuses
+vk->     ON friendship.status_id = friendship_statuses.id
+vk-> WHERE friendship_statuses.name = ('accept');
+CREATE VIEW
+vk=> 
+vk=> CREATE VIEW users_without_confirmed_friendship AS
+vk-> SELECT id FROM users WHERE id NOT IN
+vk->   (SELECT id FROM users_with_confirmed_friendship);
+CREATE VIEW
+vk=> 
+vk=> BEGIN;
+BEGIN
+vk=*> 
+vk=*>  -- Удаляем пользователя из сообществ
+vk=*>  ALTER TABLE communities_users DROP CONSTRAINT communities_users_community_id_fk;
+ALTER TABLE
+vk=*> 
+vk=*>  DELETE FROM communities_users
+vk-*>    USING users_without_confirmed_friendship
+vk-*>      WHERE user_id = users_without_confirmed_friendship.id;
+DELETE 8
+vk=*> 
+vk=*>  DELETE FROM communities
+vk-*>    USING users_without_confirmed_friendship
+vk-*>      WHERE creator_id = users_without_confirmed_friendship.id;
+DELETE 11
+vk=*> 
+vk=*>  -- Удаляем записи о дружеских отношениях
+vk=*>  DELETE FROM friendship 
+vk-*>    USING users_without_confirmed_friendship
+vk-*>      WHERE requested_by_user_id = users_without_confirmed_friendship.id 
+vk-*>        OR requested_to_user_id = users_without_confirmed_friendship.id;
+DELETE 9
+vk=*>  
+vk=*>  -- Удаляем сообщения пользователей
+vk=*>  DELETE FROM messages
+vk-*>    USING users_without_confirmed_friendship
+vk-*>      WHERE from_user_id = users_without_confirmed_friendship.id 
+vk-*>        OR to_user_id = users_without_confirmed_friendship.id;
+DELETE 15
+vk=*>        
+vk=*>  -- Очищаем ссылку на фотографии пользователя в таблице users
+vk=*>  DELETE FROM profiles
+vk-*>    USING users_without_confirmed_friendship
+vk-*>      WHERE user_id = users_without_confirmed_friendship.id;
+DELETE 9
+vk=*>  
+vk=*>  -- Удаляем фотографии пользователя
+vk=*>  DELETE FROM photo
+vk-*>    USING users_without_confirmed_friendship
+vk-*>      WHERE owner_id = users_without_confirmed_friendship.id;
+DELETE 9
+vk=*>  
+vk=*>  -- Удаляем видео файлы пользователя
+vk=*>  DELETE FROM video
+vk-*>    USING users_without_confirmed_friendship
+vk-*>      WHERE owner_id = users_without_confirmed_friendship.id;
+DELETE 8
+vk=*> 
+vk=*>  ALTER TABLE subscriptions DROP CONSTRAINT subscriptions_user_id_fk;
+ALTER TABLE
+vk=*>      
+vk=*>  -- Удаляем пользователя
+vk=*>  DELETE FROM users
+vk-*>    USING users_without_confirmed_friendship
+vk-*>      WHERE users.id = users_without_confirmed_friendship.id;
+DELETE 9
+vk=*> 
+vk=*> ROLLBACK;
+ROLLBACK
+vk=> ------------------------------------------------------------------------
+vk=> --2. Создать запрос, который для всех пользователей покажет количество 
+vk=> --загруженных фотографий и видеофайлов (отдельными столбцами), а также ранг 
+vk=> --каждого пользователя по этим значениям (также отдельно для фотографий и 
+vk=> --видеофайлов). Большие значения соответствуют более высокому рангу. Решить 
+vk=> --задание необходимо одним запросом с использованием оконных функций.
+vk=> ------------------------------------------------------------------------
+vk=>       
+vk=> WITH users_photo_and_video_rating AS (
+vk(> SELECT DISTINCT
+vk(>   users.first_name,
+vk(>   users.last_name,
+vk(>   photo_count,
+vk(>   video_count
+vk(>   FROM users
+vk(>     JOIN (
+vk(>       SELECT DISTINCT
+vk(>         users.id,
+vk(>         COUNT(photo.id) OVER (PARTITION BY users.id) AS photo_count
+vk(>         FROM users
+vk(>           LEFT JOIN photo
+vk(>             ON users.id = photo.owner_id
+vk(>     ) AS selected_photo_count
+vk(>       ON users.id = selected_photo_count.id
+vk(>     JOIN (
+vk(>       SELECT DISTINCT
+vk(>         users.id,
+vk(>         COUNT(video.id) OVER (PARTITION BY users.id) AS video_count
+vk(>         FROM users
+vk(>           LEFT JOIN video
+vk(>             ON users.id = video.owner_id
+vk(>     ) AS selected_video_count
+vk(>       ON users.id = selected_video_count.id)
+vk-> SELECT
+vk->   first_name,
+vk->   last_name,
+vk->   photo_count,
+vk->   video_count,
+vk->   DENSE_RANK() OVER (ORDER BY photo_count DESC) AS photo_rank,
+vk->   DENSE_RANK() OVER (ORDER BY video_count DESC) AS video_rank
+vk->     FROM users_photo_and_video_rating
+vk->       ORDER BY photo_rank, video_rank;
+ first_name | last_name  | photo_count | video_count | photo_rank | video_rank 
+------------+------------+-------------+-------------+------------+------------
+ Mollie     | Henry      |           1 |           3 |          1 |          1
+ Carissa    | Grimes     |           1 |           2 |          1 |          2
+ Jelani     | Santana    |           1 |           2 |          1 |          2
+ Alesha     | Stokes     |           1 |           2 |          1 |          2
+ Shelby     | Pearson    |           1 |           2 |          1 |          2
+ Bo         | Parrish    |           1 |           2 |          1 |          2
+ Neve       | Rowland    |           1 |           1 |          1 |          3
+ Mara       | Reilly     |           1 |           1 |          1 |          3
+ Priscilla  | Beach      |           1 |           1 |          1 |          3
+ Riley      | Hodge      |           1 |           1 |          1 |          3
+ Clementine | Duffy      |           1 |           1 |          1 |          3
+ Shannon    | Travis     |           1 |           1 |          1 |          3
+ Emerald    | Talley     |           1 |           1 |          1 |          3
+ Emmanuel   | Hubbard    |           1 |           0 |          1 |          4
+ Forrest    | Buckley    |           1 |           0 |          1 |          4
+ Aaron      | Shaffer    |           1 |           0 |          1 |          4
+ Nero       | Mccullough |           1 |           0 |          1 |          4
+ Skyler     | Joyner     |           1 |           0 |          1 |          4
+ Merritt    | Thornton   |           1 |           0 |          1 |          4
+ Fritz      | Beck       |           1 |           0 |          1 |          4
+(20 rows)
+
+vk=> ------------------------------------------------------------------------
+vk=> --3. Для каждой группы (сообщества) найти средний размер видеофайлов, 
+vk=> --загруженных участниками группы, а также вывести идентификатор, имя и 
+vk=> --фамилию пользователя, который загрузил самый большой по размеру видеофайл. 
+vk=> --Решить задание необходимо одним запросом с использованием оконных функций. 
+vk=> ------------------------------------------------------------------------
+vk=>       
+vk=> WITH selected_videos AS (
+vk(>   SELECT
+vk(>     communities.name AS community_name,
+vk(>     communities_users.user_id,
+vk(>     video.size AS video_size
+vk(>   FROM video
+vk(>     INNER JOIN communities_users
+vk(>       ON video.owner_id = communities_users.user_id
+vk(>     RIGHT JOIN communities
+vk(>       ON communities.id = communities_users.community_id
+vk(> )
+vk-> SELECT DISTINCT
+vk->   community_name,
+vk->   ROUND(AVG(video_size) OVER (PARTITION BY community_name)) AS average_video_size,
+vk->   FIRST_VALUE(first_name || ' ' || last_name) OVER (PARTITION BY community_name
+vk(>     ORDER BY video_size DESC NULLS LAST) AS user_with_biggest_video
+vk-> FROM selected_videos
+vk->   LEFT JOIN users
+vk->     ON selected_videos.user_id = users.id;
+ community_name | average_video_size | user_with_biggest_video 
+----------------+--------------------+-------------------------
+ hendrerit.     |            2460162 | Shelby Pearson
+ nulla.         |                    | 
+ eget           |                    | 
+ vestibulum     |                    | 
+ semper         |                    | 
+ bulla.         |            2092419 | Riley Hodge
+ Sed            |            2035497 | Priscilla Beach
+ auctor         |            1367240 | Bo Parrish
+ ligula         |                    | 
+ vitae          |                    | 
+ nec            |                    | 
+ Etiam          |            2063958 | Riley Hodge
+ tellus         |                    | 
+ tincidunt.     |            2014149 | Emerald Talley
+ dignissim.     |            2037001 | Shelby Pearson
+ sodales        |                    | 
+ et             |            2014149 | Emerald Talley
+ elit           |                    | 
+ eu             |                    | 
+ morbi          |                    | 
+(20 rows)
+
+vk=> 
