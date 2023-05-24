@@ -1,0 +1,282 @@
+
+------------------------------------------------------------------------------------
+-- Задание: 
+-- Провести оценку эффективности выполнения одного или нескольких сложных запросов 
+-- и предложить пути решения проблемных мест, провести оптимизацию запросов.
+------------------------------------------------------------------------------------
+
+--Запрос по поиску пользователей, которым принадлежат 10 самых больших видеофайлов
+
+SELECT 
+  id, 
+  (SELECT first_name FROM users WHERE users.id=video.owner_id) AS first_name, 
+  (SELECT last_name FROM users WHERE users.id=video.owner_id) AS last_name, 
+  (SELECT
+    (SELECT url FROM photo WHERE photo.id=profiles.main_photo_id)
+    FROM profiles WHERE user_id=video.owner_id
+  ) AS main_photo_url,
+  url, 
+  size 
+FROM video 
+ORDER BY size DESC LIMIT 10;
+
+---------------------------------------------
+-- Анализ эффективности выполнения запроса
+---------------------------------------------
+
+-- Посмотрим план выполнения запроса с прогнозными значениями:
+
+vk=> EXPLAIN SELECT 
+vk->   id, 
+vk->   (SELECT first_name FROM users WHERE users.id=video.owner_id) AS first_name, 
+vk->   (SELECT last_name FROM users WHERE users.id=video.owner_id) AS last_name, 
+vk->   (SELECT
+vk(>     (SELECT url FROM photo WHERE photo.id=profiles.main_photo_id)
+vk(>     FROM profiles WHERE user_id=video.owner_id
+vk(>   ) AS main_photo_url,
+vk->   url, 
+vk->   size 
+vk-> FROM video 
+vk-> ORDER BY size DESC LIMIT 10;
+                                           QUERY PLAN                                           
+------------------------------------------------------------------------------------------------
+ Limit  (cost=2.63..329.31 rows=10 width=784)
+   ->  Result  (cost=2.63..655.98 rows=20 width=784)
+         ->  Sort  (cost=2.63..2.68 rows=20 width=36)
+               Sort Key: video.size DESC
+               ->  Seq Scan on video  (cost=0.00..2.20 rows=20 width=36)
+         SubPlan 1
+           ->  Index Scan using users_pkey on users  (cost=0.14..8.16 rows=1 width=118)
+                 Index Cond: (id = video.owner_id)
+         SubPlan 2
+           ->  Index Scan using users_pkey on users users_1  (cost=0.14..8.16 rows=1 width=118)
+                 Index Cond: (id = video.owner_id)
+         SubPlan 4
+           ->  Index Scan using profiles_pkey on profiles  (cost=0.15..16.33 rows=1 width=516)
+                 Index Cond: (user_id = video.owner_id)
+                 SubPlan 3
+                   ->  Index Scan using photo_pkey on photo  (cost=0.14..8.16 rows=1 width=516)
+                         Index Cond: (id = profiles.main_photo_id)
+(17 rows)
+
+vk=> 
+
+-- Проанализируем результат:
+-- время подготовки к выводу данных = 2.63
+-- общая стоимость выполнения запроса = 329.31
+
+-- Посмотрим план выполнения запроса с актуальными значениями:
+
+EXPLAIN ANALYZE SELECT 
+  id, 
+  (SELECT first_name FROM users WHERE users.id=video.owner_id) AS first_name, 
+  (SELECT last_name FROM users WHERE users.id=video.owner_id) AS last_name, 
+  (SELECT
+    (SELECT url FROM photo WHERE photo.id=profiles.main_photo_id)
+    FROM profiles WHERE user_id=video.owner_id
+  ) AS main_photo_url,
+  url, 
+  size 
+FROM video 
+ORDER BY size DESC LIMIT 10;
+                                                                QUERY PLAN                                                                 
+-------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=2.63..329.31 rows=10 width=784) (actual time=0.272..0.586 rows=10 loops=1)
+   ->  Result  (cost=2.63..655.98 rows=20 width=784) (actual time=0.269..0.577 rows=10 loops=1)
+         ->  Sort  (cost=2.63..2.68 rows=20 width=36) (actual time=0.088..0.093 rows=10 loops=1)
+               Sort Key: video.size DESC
+               Sort Method: quicksort  Memory: 26kB
+               ->  Seq Scan on video  (cost=0.00..2.20 rows=20 width=36) (actual time=0.029..0.048 rows=20 loops=1)
+         SubPlan 1
+           ->  Index Scan using users_pkey on users  (cost=0.14..8.16 rows=1 width=118) (actual time=0.008..0.009 rows=1 loops=10)
+                 Index Cond: (id = video.owner_id)
+         SubPlan 2
+           ->  Index Scan using users_pkey on users users_1  (cost=0.14..8.16 rows=1 width=118) (actual time=0.005..0.005 rows=1 loops=10)
+                 Index Cond: (id = video.owner_id)
+         SubPlan 4
+           ->  Index Scan using profiles_pkey on profiles  (cost=0.15..16.33 rows=1 width=516) (actual time=0.021..0.022 rows=1 loops=10)
+                 Index Cond: (user_id = video.owner_id)
+                 SubPlan 3
+                   ->  Index Scan using photo_pkey on photo  (cost=0.14..8.16 rows=1 width=516) (actual time=0.006..0.007 rows=1 loops=10)
+                         Index Cond: (id = profiles.main_photo_id)
+ Planning Time: 0.612 ms
+ Execution Time: 0.712 ms
+(20 rows)
+
+vk=> 
+
+
+-- Проанализируем резулльтат:
+-- Planning Time: 0.612 ms
+-- Execution Time: 0.712 ms
+
+
+-- Перепишем предыдущий вариант запроса на JOIN:
+
+vk=> EXPLAIN ANALYZE SELECT
+vk->   video.id,
+vk->   users.first_name,
+vk->   users.last_name,
+vk->   photo.url,
+vk->   video.url,
+vk->   video.size
+vk-> FROM video 
+vk->   JOIN users ON video.owner_id = users.id
+vk->     LEFT JOIN photo ON photo.owner_id = users.id
+vk->       ORDER BY video.size DESC LIMIT 10;
+                                                              QUERY PLAN                                                              
+--------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=26.67..26.69 rows=10 width=784) (actual time=0.426..0.438 rows=10 loops=1)
+   ->  Sort  (cost=26.67..26.72 rows=20 width=784) (actual time=0.423..0.430 rows=10 loops=1)
+         Sort Key: video.size DESC
+         Sort Method: quicksort  Memory: 27kB
+         ->  Hash Right Join  (cost=15.18..26.24 rows=20 width=784) (actual time=0.327..0.371 rows=20 loops=1)
+               Hash Cond: (photo.owner_id = users.id)
+               ->  Seq Scan on photo  (cost=0.00..10.70 rows=70 width=520) (actual time=0.010..0.017 rows=20 loops=1)
+               ->  Hash  (cost=14.93..14.93 rows=20 width=272) (actual time=0.218..0.221 rows=20 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 10kB
+                     ->  Hash Join  (cost=2.45..14.93 rows=20 width=272) (actual time=0.151..0.184 rows=20 loops=1)
+                           Hash Cond: (users.id = video.owner_id)
+                           ->  Seq Scan on users  (cost=0.00..11.40 rows=140 width=240) (actual time=0.035..0.046 rows=20 loops=1)
+                           ->  Hash  (cost=2.20..2.20 rows=20 width=36) (actual time=0.081..0.082 rows=20 loops=1)
+                                 Buckets: 1024  Batches: 1  Memory Usage: 10kB
+                                 ->  Seq Scan on video  (cost=0.00..2.20 rows=20 width=36) (actual time=0.011..0.030 rows=20 loops=1)
+ Planning Time: 0.890 ms
+ Execution Time: 0.573 ms
+(17 rows)
+
+vk=> 
+
+-- Проанализируем результат:
+-- Planning Time: 0.890 ms
+-- Execution Time: 0.573 ms
+
+-- фиксируем небольшое увелечение времени подготовки к выводу данных и
+-- небольшое уменьшение времени выполнения запроса
+
+-- воспользуемся ранее подключенным расширением "pg_stats_statements" для
+-- выявления какой из запросов выполняется медленее
+
+SELECT
+  substring(query, 1, 50) AS short_query,
+  round(total_exec_time::numeric, 2) AS total_time,
+  calls,
+  round(mean_plan_time::numeric, 2) AS mean,
+  round((100 * total_exec_time / sum(total_exec_time::numeric) OVER ())::numeric, 2) AS percentage_cpu
+FROM  pg_stat_statements
+  ORDER BY total_time DESC
+  LIMIT 20;
+
+
+-[ RECORD 99 ]-+---------------------------------------------------
+short_query    | EXPLAIN ANALYZE SELECT                            +
+               |   id,                                             +
+               |   (SELECT first_nam
+total_time     | 6.80
+calls          | 3
+mean           | 0.00
+percentage_cpu | 0.08
+
+
+
+-[ RECORD 159 ]+---------------------------------------------------
+short_query    | EXPLAIN ANALYZE SELECT                            +
+               |   video.id,                                       +
+               |   users.first_n
+total_time     | 1.85
+calls          | 1
+mean           | 0.00
+percentage_cpu | 0.02
+
+
+-- можем утверждать, что запрос с использованием JOIN работает быстрее,
+-- кроме того, современные СУБД оптимизированы под выполнение запросов с
+-- использованием объединения JOIN, будем использовать запрос с JOIN
+
+-- Далее проверим наличие индексов на столбцы, которые используются в 
+-- условиях обьединения ON и сортировки ORDER BY для нашего запроса:
+
+
+vk=> SELECT indexname FROM pg_indexes WHERE tablename = 'users';
+    indexname    
+-----------------
+ users_pkey
+ users_email_key
+ users_phone_key
+(3 rows)
+
+vk=> SELECT indexname FROM pg_indexes WHERE tablename = 'photo';
+   indexname   
+---------------
+ photo_pkey
+ photo_url_key
+(2 rows)
+
+vk=> SELECT indexname FROM pg_indexes WHERE tablename = 'video';
+   indexname   
+---------------
+ video_pkey
+ video_url_key
+(2 rows)
+
+vk=> 
+
+
+-- как видим в таблицах есть индексы на столбцы первичных ключей users.id, photo.id и video.id
+-- попробуем добавить индексы на столбцы вешних ключей photo.owner_id и video.owner_id
+
+vk=>  CREATE INDEX photo_owner_id_fk ON photo (owner_id);
+CREATE INDEX
+vk=>  CREATE INDEX video_owner_id_fk ON video (owner_id);
+CREATE INDEX
+vk=> 
+
+Перестроим план выполнения запроса, который теперь должен учесть новые индексы:
+
+vk=> EXPLAIN ANALYZE SELECT
+  video.id,
+  users.first_name,
+  users.last_name,
+  photo.url,
+  video.url,
+  video.size
+FROM video 
+  JOIN users ON video.owner_id = users.id
+    LEFT JOIN photo ON photo.owner_id = users.id
+      ORDER BY video.size DESC LIMIT 10;
+                                                           QUERY PLAN                                                           
+--------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=16.91..16.94 rows=10 width=784) (actual time=0.384..0.397 rows=10 loops=1)
+   ->  Sort  (cost=16.91..16.96 rows=20 width=784) (actual time=0.381..0.389 rows=10 loops=1)
+         Sort Key: video.size DESC
+         Sort Method: quicksort  Memory: 27kB
+         ->  Hash Left Join  (cost=3.90..16.48 rows=20 width=784) (actual time=0.206..0.260 rows=20 loops=1)
+               Hash Cond: (users.id = photo.owner_id)
+               ->  Hash Join  (cost=2.45..14.93 rows=20 width=272) (actual time=0.124..0.158 rows=20 loops=1)
+                     Hash Cond: (users.id = video.owner_id)
+                     ->  Seq Scan on users  (cost=0.00..11.40 rows=140 width=240) (actual time=0.031..0.042 rows=20 loops=1)
+                     ->  Hash  (cost=2.20..2.20 rows=20 width=36) (actual time=0.053..0.056 rows=20 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 10kB
+                           ->  Seq Scan on video  (cost=0.00..2.20 rows=20 width=36) (actual time=0.011..0.029 rows=20 loops=1)
+               ->  Hash  (cost=1.20..1.20 rows=20 width=520) (actual time=0.070..0.070 rows=20 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 10kB
+                     ->  Seq Scan on photo  (cost=0.00..1.20 rows=20 width=520) (actual time=0.009..0.019 rows=20 loops=1)
+ Planning Time: 0.924 ms
+ Execution Time: 0.541 ms
+(17 rows)
+
+vk=> 
+
+-- как видим время выполнения запросы незначительно уменьшилось, так же не удалось
+-- избавиться от последовательного сканирования таблиц, предположим, что это связано
+-- с малым обьемом таблиц, используемыми мной в курсе
+
+-- Обновим статистическую информацию
+
+vk=> ANALYZE;
+
+-- Вывод: 
+-- в результате анализа эффективности выполнения и оптимизации запроса добился уменьшения
+-- времени выполнения запроса с 0.712 ms до 0.541 ms. Убедился в более эффективном использовании
+-- запросов с обьединением JOIN а не на вложенных запросах. Научился искать медленные запросы.
+-- Так же реально увидел разницу после индексирования полей обьединения - время выполнения уменьшается
